@@ -53,8 +53,24 @@ public partial class FiveStackPlugin
 
         if (shouldKick && lineup_id == null)
         {
-            Server.ExecuteCommand($"kickid {player.UserId}");
-            return HookResult.Continue;
+            if (PendingPlayers.ContainsKey(player.SteamID))
+            {
+                player.ClanName = PendingPlayers[player.SteamID];
+                PendingPlayers.Remove(player.SteamID);
+
+                MatchManager? matchManager = _matchService.GetCurrentMatch();
+
+                if (matchManager != null)
+                {
+                    matchManager.UpdatePlayerName(player, player.PlayerName, player.ClanName);
+                }
+            }
+
+            if (player.ClanName != "[admin]" && player.ClanName != "[organizer]")
+            {
+                Server.ExecuteCommand($"kickid {player.UserId}");
+                return HookResult.Continue;
+            }
         }
 
         match.EnforceMemberTeam(player, CsTeam.None);
